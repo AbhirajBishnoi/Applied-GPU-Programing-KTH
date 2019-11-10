@@ -93,26 +93,25 @@ int main(int argc, char *argv[])
   printf("\n\nTotal time taken for %d particles and %d iterations on the CPU alone = %ld microseconds", num_particles, num_iterations, elapsed_cpu); 
   cudaMalloc(&particlesGPU, num_particles * sizeof(struct particle));
 
-  gettimeofday(&t0, 0); 
-  
   printf("\n\nComputing simulation on the GPU...");
-
+  gettimeofday(&t0, 0); 
+ 
   for (int i = 0; i < num_iterations; i++) {
     timestep<<<num_blocks, tpb>>>(particlesGPU, seed, i, num_particles);
     cudaDeviceSynchronize();
   }
 
+   cudaMemcpy(resultGPUSimulation, particlesGPU, num_particles * sizeof(struct particle), cudaMemcpyDeviceToHost);
+
   gettimeofday(&t1, 0);
   long elapsed_gpu = (t1.tv_sec-t0.tv_sec)*1000000 + t1.tv_usec-t0.tv_usec;
 
   printf("Done!");
-  printf("\n\nTotal time taken for %d particles and %d iterations using the GPU = %ld microseconds", num_particles, num_iterations, elapsed_gpu);
+  printf("\n\nTotal time taken for %d particles, %d iterations, %d tpb and %d blocks using the GPU = %ld microseconds", num_particles, num_iterations, tpb, num_blocks, elapsed_gpu);
  
   // comparing the results of the two versions
 
   printf("\n\nComparing the output for each implementation...");
-
-  cudaMemcpy(resultGPUSimulation, particlesGPU, num_particles * sizeof(struct particle), cudaMemcpyDeviceToHost);
 
   int flag_comparison = 0;
   
