@@ -213,7 +213,7 @@ void semi_discrete_step( double *state_init , double *state_forcing , double *st
   }
 
   //Apply the tendencies to the fluid state
-  #pragma acc parallel loop collapse(3) private(inds,indt) copyin(state_init[(nz+2*hs)*(nx+2*hs)*NUM_VARS], tend[0:NUM_VARS*(nz*nx)*(nz*nx+1)]) copyout(state_out[(nz+2*hs)*(nx+2*hs)*NUM_VARS])
+  #pragma acc parallel loop collapse(3) private(inds,indt) copyin(state_init[0:(nz+2*hs)*(nx+2*hs)*NUM_VARS], tend[0:NUM_VARS*(nz*nx)*(nz*nx+1)]) copyout(state_out[0:(nz+2*hs)*(nx+2*hs)*NUM_VARS])
   for (ll=0; ll<NUM_VARS; ll++) {
     for (k=0; k<nz; k++) {
       for (i=0; i<nx; i++) {
@@ -236,7 +236,7 @@ void compute_tendencies_x( double *state , double *flux , double *tend ) {
   //Compute the hyperviscosity coeficient
   hv_coef = -hv_beta * dx / (16*dt);
   //Compute fluxes in the x-direction for each cell
-  #pragma acc parallel loop collapse(2) private(ll,s,inds,stencil,vals,d3_vals,r,u,w,t,p) copyin(state[(nz+2*hs)*(nx+2*hs)*NUM_VARS]) copyout(flux[(nz+1)*(nx+1)*NUM_VARS])
+  #pragma acc parallel loop collapse(2) private(ll,s,inds,stencil,vals,d3_vals,r,u,w,t,p) copyin(state[0:(nz+2*hs)*(nx+2*hs)*NUM_VARS]) copyout(flux[0:(nz+1)*(nx+1)*NUM_VARS])
   for (k=0; k<nz; k++) {
     for (i=0; i<nx+1; i++) {
       //Use fourth-order interpolation from four cell averages to compute the value at the interface in question
@@ -267,7 +267,7 @@ void compute_tendencies_x( double *state , double *flux , double *tend ) {
   }
 
   //Use the fluxes to compute tendencies for each cell
-  #pragma acc parallel loop collapse(3) private(indt,indf1,indf2) copyin(flux[(nz+1)*(nx+1)*NUM_VARS]) copyout(tend[0:NUM_VARS*(nz*nx)*(nz*nx+1)])
+  #pragma acc parallel loop collapse(3) private(indt,indf1,indf2) copyin(flux[0:(nz+1)*(nx+1)*NUM_VARS]) copyout(tend[0:NUM_VARS*(nz*nx)*(nz*nx+1)])
   for (ll=0; ll<NUM_VARS; ll++) {
     for (k=0; k<nz; k++) {
       for (i=0; i<nx; i++) {
@@ -291,7 +291,7 @@ void compute_tendencies_z( double *state , double *flux , double *tend ) {
   //Compute the hyperviscosity coeficient
   hv_coef = -hv_beta * dx / (16*dt);
   //Compute fluxes in the x-direction for each cell
-  #pragma acc parallel loop collapse(2) private(ll,s,inds,stencil,vals,d3_vals,r,u,w,t,p) copyin(state[(nz+2*hs)*(nx+2*hs)*NUM_VARS],hy_dens_int[nz+1],hy_dens_theta_int[nz+1],hy_pressure_int[nz+1]) copyout(flux[(nz+1)*(nx+1)*NUM_VARS])
+  #pragma acc parallel loop collapse(2) private(ll,s,inds,stencil,vals,d3_vals,r,u,w,t,p) copyin(state[0:(nz+2*hs)*(nx+2*hs)*NUM_VARS],hy_dens_int[0:nz+1],hy_dens_theta_int[0:nz+1],hy_pressure_int[0:nz+1]) copyout(flux[0:(nz+1)*(nx+1)*NUM_VARS])
   for (k=0; k<nz+1; k++) {
     for (i=0; i<nx; i++) {
       //Use fourth-order interpolation from four cell averages to compute the value at the interface in question
@@ -322,7 +322,7 @@ void compute_tendencies_z( double *state , double *flux , double *tend ) {
   }
 
   //Use the fluxes to compute tendencies for each cell
-  #pragma acc parallel loop collapse(3) private(indt,indf1,indf2) copyin(state[(nz+2*hs)*(nx+2*hs)*NUM_VARS], flux[(nz+1)*(nx+1)*NUM_VARS]) copyout(tend[nz*nx*NUM_VARS])
+  #pragma acc parallel loop collapse(3) private(indt,indf1,indf2) copyin(state[0:(nz+2*hs)*(nx+2*hs)*NUM_VARS], flux[0:(nz+1)*(nx+1)*NUM_VARS]) copyout(tend[0:nz*nx*NUM_VARS])
   for (ll=0; ll<NUM_VARS; ll++) {
     for (k=0; k<nz; k++) {
       for (i=0; i<nx; i++) {
@@ -351,7 +351,7 @@ void set_halo_values_x( double *state ) {
   ierr = MPI_Irecv(recvbuf_r,hs*nz*NUM_VARS,MPI_DOUBLE,right_rank,1,MPI_COMM_WORLD,&req_r[1]);
 
   //Pack the send buffers
-  #pragma acc parallel loop collapse(3) copyin(state[(nz+2*hs)*(nx+2*hs)*NUM_VARS]) copyout(sendbuf_l[hs*nz*NUM_VARS],sendbuf_r[hs*nz*NUM_VARS]) 
+  #pragma acc parallel loop collapse(3) copyin(state[0:(nz+2*hs)*(nx+2*hs)*NUM_VARS]) copyout(sendbuf_l[0:hs*nz*NUM_VARS],sendbuf_r[0:hs*nz*NUM_VARS]) 
   for (ll=0; ll<NUM_VARS; ll++) {
     for (k=0; k<nz; k++) {
       for (s=0; s<hs; s++) {
@@ -371,7 +371,7 @@ void set_halo_values_x( double *state ) {
 
 
   //Unpack the receive buffers
-  #pragma acc parallel loop collapse(3) copyin(recvbuf_l[hs*nz*NUM_VARS],recvbuf_r[hs*nz*NUM_VARS]) copyout(state[(nz+2*hs)*(nx+2*hs)*NUM_VARS]) 
+  #pragma acc parallel loop collapse(3) copyin(recvbuf_l[0:hs*nz*NUM_VARS],recvbuf_r[0:hs*nz*NUM_VARS]) copyout(state[0:(nz+2*hs)*(nx+2*hs)*NUM_VARS]) 
 
   for (ll=0; ll<NUM_VARS; ll++) {
     for (k=0; k<nz; k++) {
@@ -387,7 +387,7 @@ void set_halo_values_x( double *state ) {
 
   if (data_spec_int == DATA_SPEC_INJECTION) {
     if (myrank == 0) {
-      #pragma acc parallel loop private(z,ind_r,ind_u,ind_t) collapse(2) copyin(hy_dens_cell[nz+2*hs],hy_dens_theta_cell[nz+2*hs]) copy(state[(nz+2*hs)*(nx+2*hs)*NUM_VARS]) 
+      #pragma acc parallel loop private(z,ind_r,ind_u,ind_t) collapse(2) copyin(hy_dens_cell[0:nz+2*hs],hy_dens_theta_cell[0:nz+2*hs]) copy(state[0:(nz+2*hs)*(nx+2*hs)*NUM_VARS])
       for (k=0; k<nz; k++) {
         for (i=0; i<hs; i++) {
           z = (k_beg + k+0.5)*dz;
@@ -411,7 +411,7 @@ void set_halo_values_z( double *state ) {
   int          i, ll;
   const double mnt_width = xlen/8;
   double       x, xloc, mnt_deriv;
-  #pragma acc parallel loop collapse(2) private(x,xloc,mnt_deriv) copy(state[(nz+2*hs)*(nx+2*hs)*NUM_VARS])
+  #pragma acc parallel loop collapse(2) private(x,xloc,mnt_deriv) copy(state[0:(nz+2*hs)*(nx+2*hs)*NUM_VARS])
   for (ll=0; ll<NUM_VARS; ll++) {
     for (i=0; i<nx+2*hs; i++) {
       if (ll == ID_WMOM) {
