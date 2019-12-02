@@ -121,8 +121,8 @@ int main(int argc, char **argv) {
   ///////////////////////////////////////////////////////////////////////////////////////
   //The x-direction length is twice as long as the z-direction length
   //So, you'll want to have nx_glob be twice as large as nz_glob
-  nx_glob = 400;      //Number of total cells in the x-dirction
-  nz_glob = 200;      //Number of total cells in the z-dirction
+  nx_glob = 100;      //Number of total cells in the x-dirction
+  nz_glob = 50;      //Number of total cells in the z-dirction
   sim_time = 500;     //How many seconds to run the simulation
   output_freq = 10;   //How frequently to output data to file (in seconds)
   //Model setup: DATA_SPEC_THERMAL or DATA_SPEC_COLLISION
@@ -213,7 +213,7 @@ void semi_discrete_step( double *state_init , double *state_forcing , double *st
   }
 
   //Apply the tendencies to the fluid state
-  #pragma acc parallel loop collapse(3) private(inds,indt) copyin(state_init[0:((NUM_VARS+2*hs)*(NUM_VARS+2*hs)*(NUM_VARS+2*hs))], tend[0:NUM_VARS*NUM_VARS*NUM_VARS]) copyout(state_out[0:((NUM_VARS+2*hs)*(NUM_VARS+2*hs)*(NUM_VARS+2*hs))])
+  #pragma acc parallel loop collapse(3) private(inds,indt) copyin(state_init[(nz+2*hs)*(nx+2*hs)*NUM_VARS], tend[0:NUM_VARS*(nz*nx)*(nz*nx+1)]) copyout(state_out[(nz+2*hs)*(nx+2*hs)*NUM_VARS])
   for (ll=0; ll<NUM_VARS; ll++) {
     for (k=0; k<nz; k++) {
       for (i=0; i<nx; i++) {
