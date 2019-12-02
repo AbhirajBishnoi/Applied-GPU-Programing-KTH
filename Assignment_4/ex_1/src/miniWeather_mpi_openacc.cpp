@@ -411,7 +411,7 @@ void set_halo_values_z( double *state ) {
   int          i, ll;
   const double mnt_width = xlen/8;
   double       x, xloc, mnt_deriv;
-  #pragma acc parallel loop collapse(2) private(x,xloc,mnt_deriv)
+  #pragma acc parallel loop collapse(2) private(x,xloc,mnt_deriv) copy(state[(nz+2*hs)*(nx+2*hs)*NUM_VARS])
   for (ll=0; ll<NUM_VARS; ll++) {
     for (i=0; i<nx+2*hs; i++) {
       if (ll == ID_WMOM) {
